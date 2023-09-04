@@ -10,73 +10,63 @@ use GuzzleHttp\Client;
 
 class LoginController extends Controller
 {
-    /**
-     * Handle the incoming request.
-     */
-    public function __invoke(Request $request)
-    {
-        //set validation
-        $validator = Validator::make($request->all(), [
-            'email'     => 'required',
-            'password'  => 'required'
-        ]);
-
-        //if validation fails
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
-        //get credentials from request
-        $credentials = $request->only('email', 'password');
-
-        //if auth failed
-        if(!$token = auth()->guard('api')->attempt($credentials)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Email atau Password Anda salah'
-            ], 401);
-        }
-
-        //if auth success
-        return response()->json([
-            'success' => true,
-            'user'    => auth()->guard('api')->user(),    
-            'token'   => $token   
-        ], 200);
-    }
-
-    //login
     public function login(){
-        return view('login');
+        return view('Login.login');
     }
     public function loginApi(Request $request){
 
         $request->validate([
-            'email' =>'required|email',
-            'password' =>'required',
+            'fty' => 'required',
+            'wh' => 'required',
+            'nik' => 'required',
+            'pass' =>'required',
         ]);
+       
         try{
-            $http = new \GuzzleHttp\Client;
-        $email =  $request->email;
-        $password =  $request->password;
+        // $http = new \GuzzleHttp\Client;
+        $fty =  $request->fty;
+        $wh =  $request->wh;
+        $nik =  $request->nik;
+        $pass =  $request->pass;
 
-        $response = $http->post('http://localhost/laravel',[
-            'header'=>[
-                'Authorization'=>'Bearer'.session()->get('token.access_token')
-            ],
-            'query'=>[
-                'email'=>$email,
-                'password'=>$password
-            ]
-            ]);
-
-            $result = json_decode((string)$response->getBody(),true);
-            return dd($result);
-
-            return redirect()->route('home');
-        }catch(\Exception $e){
-            return redirect()->back()->with('error','Login fail, Please try again');
-        }
-        
-    }
+           
+             /* API URL */
+                $url = 'http://192.168.100.190/api/api/v1.0/login';
+                    
+                /* Init cURL resource */
+                $ch = curl_init($url);
+                    
+                /* Array Parameter Data */
+                $data = [
+                    'fty'=>$fty,
+                    'wh' =>$wh, 
+                    'nik'=>$nik,
+                    'pass'=>$pass
+                ];
+                    
+                /* pass encoded JSON string to the POST fields */
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                    
+                /* set the content type json */
+                $headers = [];
+                $headers[] = 'Content-Type:application/json';
+                $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9ncmFtIjoid21zIn0.UgiKdlrIphDsq5vj5g5NYzjd_38NcLllXAX4xM_TIVM";
+                $headers[] = "Authorization: Bearer ".$token;
+                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+                    
+                /* set return type json */
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    
+                /* execute request */
+                $result = curl_exec($ch);
+                    
+                /* close cURL resource */
+                curl_close($ch);
+                return redirect('home');
+            
+        } 
+        catch(\Exception $e){
+                return redirect()->back()->with('error','Login fail, Please try again');
+            }     
+    } 
 }
