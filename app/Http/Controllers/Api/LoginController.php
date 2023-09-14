@@ -1,72 +1,105 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+
 
 class LoginController extends Controller
 {
+    
     public function login(){
-        return view('Login.login');
+        
+            return view('Login.login');
     }
+    
     public function loginApi(Request $request){
 
-        $request->validate([
+       $request->validate([
             'fty' => 'required',
             'wh' => 'required',
             'nik' => 'required',
             'pass' =>'required',
         ]);
-       
-        try{
-        // $http = new \GuzzleHttp\Client;
-        $fty =  $request->fty;
-        $wh =  $request->wh;
-        $nik =  $request->nik;
-        $pass =  $request->pass;
+    
+            $fty =  $request->fty;
+            $wh =  $request->wh;
+            $nik =  $request->nik;
+            $pass =  $request->pass;
 
-           
-             /* API URL */
-                $url = 'http://192.168.100.190/api/api/v1.0/login';
-                    
-                /* Init cURL resource */
-                $ch = curl_init($url);
-                    
-                /* Array Parameter Data */
-                $data = [
+            //inisialisasi dlu
+            $curl = curl_init();
+
+            //set urlnya
+            curl_setopt($curl, CURLOPT_URL, 'http://192.168.100.190/api/api/v1.0/login');
+            //method
+            curl_setopt($curl, CURLOPT_POST, true);
+
+            //requestnya ke bodynya
+            $data = array(
                     'fty'=>$fty,
                     'wh' =>$wh, 
                     'nik'=>$nik,
-                    'pass'=>$pass
-                ];
-                    
-                /* pass encoded JSON string to the POST fields */
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-                    
-                /* set the content type json */
-                $headers = [];
-                $headers[] = 'Content-Type:application/json';
-                $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9ncmFtIjoid21zIn0.UgiKdlrIphDsq5vj5g5NYzjd_38NcLllXAX4xM_TIVM";
-                $headers[] = "Authorization: Bearer ".$token;
-                curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-                    
-                /* set return type json */
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    
-                /* execute request */
-                $result = curl_exec($ch);
-                    
-                /* close cURL resource */
-                curl_close($ch);
-                return redirect('home');
+                    'password'=>$pass,
+                    'namaaplikasi'=>'wms'
+            );
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+
+            //auth header
+            $token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9ncmFtIjoid21zIn0.UgiKdlrIphDsq5vj5g5NYzjd_38NcLllXAX4xM_TIVM";
+            $headers = array(
+                'Authorization: Bearer ' . $token,
+                'Content-Type: application/json',
+                'Accept: application/json'
+            );
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             
-        } 
-        catch(\Exception $e){
-                return redirect()->back()->with('error','Login fail, Please try again');
-            }     
-    } 
+            //memberikan return
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+            //jalan execute
+            $response = curl_exec($curl);
+            
+            //close
+            curl_close($curl);
+               
+                
+                $tampung = json_decode($response, true);
+              
+                if($tampung['success'] == true){
+                    session(['autorize'=>true]);
+                    return redirect('home');
+                }else{
+                    return back()->with('Loginerror','NIK atau Password Salah');
+                }
+                
+                // var_dump(json_decode($response, true));
+                // dd($tampung['success']);
+                
+            }
+
+    
+        
 }
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+ 
